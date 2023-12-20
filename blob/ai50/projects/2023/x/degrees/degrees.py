@@ -3,13 +3,13 @@ import sys
 
 from util import Node, StackFrontier, QueueFrontier
 
-# Maps names to a set of corresponding person_ids
+# Mapping names to sets of corresponding person_ids
 names = {}
 
-# Maps person_ids to a dictionary of: name, birth, movies (a set of movie_ids)
+# Mapping person_ids to dictionaries containing name, birth, and movies (a set of movie_ids)
 people = {}
 
-# Maps movie_ids to a dictionary of: title, year, stars (a set of person_ids)
+# Mapping movie_ids to dictionaries containing title, year, and stars (a set of person_ids)
 movies = {}
 
 
@@ -91,6 +91,7 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
+
     start = Node(state=source, parent=None, action=None)
     frontier = QueueFrontier()
     frontier.add(start)
@@ -98,30 +99,40 @@ def shortest_path(source, target):
     explored = set()
 
     while True:
-
         if frontier.empty():
             return None
-        
+
         node = frontier.remove()
-        
+
+        if node.state == target:
+            rt = []
+
+            while node.parent is not None:
+                rt.append((node.action, node.state))
+                node = node.parent
+
+            rt.reverse()
+            return rt
+
         explored.add(node.state)
 
-        for movie_id, person_id in neighbors_for_person(node.state):
-            if not frontier.contains_state(person_id) and person_id not in explored:
-                child = Node(state = person_id, parent = node, action = movie_id)
+        # Find neighbors
+        neighbors = neighbors_for_person(node.state)
+
+        # Add neighbors to frontier
+        for action, state in neighbors:
+            if not frontier.contains_state(state) and state not in explored:
+                child = Node(state=state, parent=node, action=action)
                 if child.state == target:
-                    movies = []
-                    persons = []
+                    rt = []
+
                     while child.parent is not None:
-                        movies.append(child.action)
-                        persons.append(child.state)
+                        rt.append((child.action, child.state))
                         child = child.parent
-                    movies.reverse()
-                    persons.reverse()
-                    return list(zip(movies, persons))
+
+                    rt.reverse()
+                    return rt
                 frontier.add(child)
-    # TODO
-    raise NotImplementedError
 
 
 def person_id_for_name(name):
